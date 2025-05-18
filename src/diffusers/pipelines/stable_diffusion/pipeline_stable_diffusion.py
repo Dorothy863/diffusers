@@ -995,6 +995,15 @@ class StableDiffusionPipeline(
 
         # 5. Prepare latent variables
         num_channels_latents = self.unet.config.in_channels
+
+        if latents is not None: # then add noise to it
+            noise = randn_tensor(
+                latents.shape, generator=generator, device=device, dtype=latents.dtype
+            )
+            noise_time = int(400 / (1000/num_inference_steps))
+            timesteps = timesteps[-noise_time:]
+            input_time = timesteps[0]
+            latents = self.scheduler.add_noise(latents, noise, input_time)
         latents = self.prepare_latents(
             batch_size * num_images_per_prompt,
             num_channels_latents,
@@ -1005,6 +1014,8 @@ class StableDiffusionPipeline(
             generator,
             latents,
         )
+
+
 
         # 6. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
